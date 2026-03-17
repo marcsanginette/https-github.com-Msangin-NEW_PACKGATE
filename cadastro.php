@@ -1,6 +1,64 @@
 <?php
 session_start();
-// Aqui futuramente entrará a lógica de inserção no banco de dados
+require_once 'conexao.php';
+
+$error = '';
+$success = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $role = $_POST['role'] ?? 'comprador';
+    $name = trim($_POST['name'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $company_name = trim($_POST['company_name'] ?? '');
+    $phone = trim($_POST['phone'] ?? '');
+    
+    // Campos de fabricante
+    $cnpj = trim($_POST['cnpj'] ?? '');
+    $description = trim($_POST['description'] ?? '');
+    $employees_count = trim($_POST['employees_count'] ?? '');
+    $annual_revenue = trim($_POST['annual_revenue'] ?? '');
+
+    // Validação básica
+    if (empty($name) || empty($email) || empty($password)) {
+        $error = "Por favor, preencha todos os campos obrigatórios (Nome, Email e Senha).";
+    } elseif ($role === 'fabricante' && (empty($cnpj) || empty($employees_count) || empty($annual_revenue))) {
+        $error = "Fabricantes precisam preencher CNPJ, Quantidade de Funcionários e Faturamento Anual.";
+    } else {
+        // Verifica se o email já existe
+        $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+        $stmt->execute([$email]);
+        if ($stmt->fetch()) {
+            $error = "Este email já está cadastrado em nossa plataforma.";
+        } else {
+            // Criptografa a senha
+            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+            try {
+                // Insere no banco de dados
+                $stmt = $pdo->prepare("INSERT INTO users (role, name, email, password, company_name, phone, cnpj, description, employees_count, annual_revenue) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->execute([
+                    $role, 
+                    $name, 
+                    $email, 
+                    $hashed_password, 
+                    $company_name, 
+                    $phone, 
+                    $cnpj, 
+                    $description, 
+                    $employees_count, 
+                    $annual_revenue
+                ]);
+                
+                $success = "Cadastro realizado com sucesso! Você já pode fazer login.";
+                // Opcional: Redirecionar para o login após 2 segundos
+                // header("refresh:2;url=login.php");
+            } catch (PDOException $e) {
+                $error = "Erro ao cadastrar: " . $e->getMessage();
+            }
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -32,6 +90,29 @@ session_start();
                 <h1 class="text-2xl font-bold text-gray-900 mb-2">Criar Nova Conta</h1>
                 <p class="text-gray-500 text-sm">Junte-se à maior plataforma B2B de embalagens do Brasil</p>
             </div>
+
+            <?php if ($error): ?>
+                <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-lg">
+                    <div class="flex items-center">
+                        <svg class="h-5 w-5 text-red-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>
+                        <p class="text-sm text-red-700 font-medium"><?php echo htmlspecialchars($error); ?></p>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($success): ?>
+                <div class="bg-green-50 border-l-4 border-green-500 p-4 mb-6 rounded-r-lg">
+                    <div class="flex items-center">
+                        <svg class="h-5 w-5 text-green-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+                        <p class="text-sm text-green-700 font-medium"><?php echo htmlspecialchars($success); ?></p>
+                    </div>
+                </div>
+                <script>
+                    setTimeout(function() {
+                        window.location.href = 'login.php';
+                    }, 3000);
+                </script>
+            <?php endif; ?>
 
             <form action="cadastro.php" method="POST">
                 <input type="hidden" id="role_input" name="role" value="comprador">

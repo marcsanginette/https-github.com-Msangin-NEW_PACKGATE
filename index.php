@@ -1,4 +1,5 @@
 <?php
+session_start();
 require_once 'conexao.php';
 
 // Função para buscar produtos do banco de dados
@@ -172,9 +173,19 @@ function renderProductCard($product) {
             </div>
 
             <div class="flex items-center gap-6 flex-shrink-0 text-gray-600">
-                <a href="login.php" class="hover:text-brand-green transition relative">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                </a>
+                <?php if (isset($_SESSION['user_id'])): ?>
+                    <div class="flex items-center gap-3">
+                        <div class="flex flex-col text-right leading-tight">
+                            <span class="text-[10px] text-gray-400">Olá, <?php echo htmlspecialchars($_SESSION['user_role'] === 'fabricante' ? 'Fabricante' : 'Comprador'); ?></span>
+                            <span class="text-sm font-bold text-brand-darkblue"><?php echo htmlspecialchars(explode(' ', trim($_SESSION['user_name']))[0]); ?></span>
+                        </div>
+                        <a href="logout.php" class="text-xs bg-red-50 text-red-500 hover:bg-red-100 px-2 py-1 rounded font-medium transition">Sair</a>
+                    </div>
+                <?php else: ?>
+                    <a href="login.php" class="hover:text-brand-green transition relative">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </a>
+                <?php endif; ?>
                 <button class="hover:text-brand-green transition relative">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
                     <span class="absolute -top-1 -right-1 bg-brand-green text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">0</span>

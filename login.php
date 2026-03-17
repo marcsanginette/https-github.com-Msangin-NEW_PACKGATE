@@ -1,6 +1,46 @@
 <?php
 session_start();
-// Aqui futuramente entrará a lógica de validação de login com o banco de dados
+require_once 'conexao.php';
+
+$error = '';
+
+// Se o usuário já estiver logado, redireciona para a página inicial
+if (isset($_SESSION['user_id'])) {
+    header("Location: index.php");
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+
+    if (empty($email) || empty($password)) {
+        $error = "Por favor, preencha email e senha.";
+    } else {
+        try {
+            // Busca o usuário pelo email
+            $stmt = $pdo->prepare("SELECT id, name, password, role FROM users WHERE email = ?");
+            $stmt->execute([$email]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            // Verifica se o usuário existe e se a senha está correta
+            if ($user && password_verify($password, $user['password'])) {
+                // Login com sucesso: salva dados na sessão
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['user_name'] = $user['name'];
+                $_SESSION['user_role'] = $user['role'];
+                
+                // Redireciona para a página inicial (ou painel específico no futuro)
+                header("Location: index.php");
+                exit;
+            } else {
+                $error = "Email ou senha incorretos.";
+            }
+        } catch (PDOException $e) {
+            $error = "Erro ao realizar login: " . $e->getMessage();
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -29,6 +69,15 @@ session_start();
                 <h1 class="text-2xl font-bold text-gray-900 mb-2">Entrar na Plataforma</h1>
                 <p class="text-gray-500 text-sm">Acesse sua conta para continuar</p>
             </div>
+
+            <?php if ($error): ?>
+                <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-lg">
+                    <div class="flex items-center">
+                        <svg class="h-5 w-5 text-red-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>
+                        <p class="text-sm text-red-700 font-medium"><?php echo htmlspecialchars($error); ?></p>
+                    </div>
+                </div>
+            <?php endif; ?>
 
             <form action="login.php" method="POST" class="space-y-5">
                 <div>
