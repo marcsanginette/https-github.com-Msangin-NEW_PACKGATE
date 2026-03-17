@@ -60,7 +60,9 @@ try {
     // Tenta adicionar TODAS as colunas possíveis caso a tabela seja antiga
     // -------------------------------------------------------------------------
     $expected_columns = [
-        'manufacturer_id' => 'INT NOT NULL',
+        'name' => 'VARCHAR(255) NOT NULL',
+        'description' => 'TEXT',
+        'manufacturer_id' => 'INT',
         'category_id' => 'INT',
         'type' => 'VARCHAR(100)',
         'weight' => 'VARCHAR(100)',
@@ -90,6 +92,14 @@ try {
     try {
         $pdo->exec("ALTER TABLE products ADD CONSTRAINT fk_category FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL;");
     } catch (PDOException $e) {}
+
+    // Modificar colunas antigas para aceitar NULL (evita erros ao inserir novos produtos)
+    $legacy_columns = ['category', 'image', 'section'];
+    foreach ($legacy_columns as $legacy_col) {
+        try {
+            $pdo->exec("ALTER TABLE products MODIFY COLUMN $legacy_col VARCHAR(255) NULL;");
+        } catch (PDOException $e) {}
+    }
 
     // Modificar min_quantity para VARCHAR para aceitar textos como "1.000 unidades" (caso já existisse como INT)
     try {
