@@ -73,6 +73,10 @@ try {
         'min_quantity' => "VARCHAR(100) NOT NULL DEFAULT '1'",
         'additional_notes' => 'TEXT',
         'image_url' => 'VARCHAR(255)',
+        'image_url_2' => 'VARCHAR(255)',
+        'image_url_3' => 'VARCHAR(255)',
+        'image_url_4' => 'VARCHAR(255)',
+        'image_url_5' => 'VARCHAR(255)',
         'created_at' => 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP'
     ];
 

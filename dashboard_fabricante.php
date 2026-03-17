@@ -142,7 +142,9 @@ $produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <th class="px-6 py-4 font-medium">Ref</th>
                                     <th class="px-6 py-4 font-medium">Produto</th>
                                     <th class="px-6 py-4 font-medium">Categoria</th>
-                                    <th class="px-6 py-4 font-medium">Preço Base</th>
+                                    <th class="px-6 py-4 font-medium">Tipo</th>
+                                    <th class="px-6 py-4 font-medium">Dimensões</th>
+                                    <th class="px-6 py-4 font-medium">Personalizável</th>
                                     <th class="px-6 py-4 font-medium">Qtd Mínima</th>
                                     <th class="px-6 py-4 font-medium text-right">Ações</th>
                                 </tr>
@@ -165,17 +167,25 @@ $produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                 </div>
                                             </td>
                                             <td class="px-6 py-4"><?php echo htmlspecialchars($produto['category_name'] ?? 'Sem Categoria'); ?></td>
-                                            <td class="px-6 py-4 text-brand-darkblue font-bold">R$ <?php echo number_format($produto['price'], 2, ',', '.'); ?></td>
+                                            <td class="px-6 py-4"><?php echo htmlspecialchars($produto['type'] ?? '-'); ?></td>
+                                            <td class="px-6 py-4"><?php echo htmlspecialchars($produto['dimensions'] ?? '-'); ?></td>
+                                            <td class="px-6 py-4">
+                                                <?php if ($produto['customizable']): ?>
+                                                    <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">Sim</span>
+                                                <?php else: ?>
+                                                    <span class="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded">Não</span>
+                                                <?php endif; ?>
+                                            </td>
                                             <td class="px-6 py-4"><?php echo htmlspecialchars($produto['min_quantity']); ?></td>
                                             <td class="px-6 py-4 text-right">
-                                                <button class="text-blue-500 hover:text-blue-700 font-medium text-sm mr-3">Editar</button>
-                                                <button class="text-red-500 hover:text-red-700 font-medium text-sm">Excluir</button>
+                                                <a href="editar_produto.php?id=<?php echo $produto['id']; ?>" class="text-blue-500 hover:text-blue-700 font-medium text-sm mr-3">Editar</a>
+                                                <a href="excluir_produto.php?id=<?php echo $produto['id']; ?>" onclick="return confirm('Tem certeza que deseja excluir este produto?');" class="text-red-500 hover:text-red-700 font-medium text-sm">Excluir</a>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>
                                     <tr>
-                                        <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                                        <td colspan="8" class="px-6 py-8 text-center text-gray-500">
                                             Nenhum produto cadastrado ainda. <br>
                                             <a href="cadastrar_produto.php" class="text-brand-green font-bold hover:underline mt-2 inline-block">Cadastrar meu primeiro produto</a>
                                         </td>

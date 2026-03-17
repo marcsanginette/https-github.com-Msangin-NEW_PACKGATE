@@ -17,6 +17,23 @@ $mensagem_erro = '';
 $stmt = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC");
 $categorias = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+$produto_id = $_GET['id'] ?? null;
+
+if (!$produto_id) {
+    header("Location: dashboard_fabricante.php");
+    exit;
+}
+
+// Buscar dados do produto
+$stmt = $pdo->prepare("SELECT * FROM products WHERE id = ? AND manufacturer_id = ?");
+$stmt->execute([$produto_id, $user_id]);
+$produto = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$produto) {
+    header("Location: dashboard_fabricante.php");
+    exit;
+}
+
 // Processar o formulário quando enviado
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name'] ?? '');
@@ -35,9 +52,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $price = isset($_POST['price']) ? floatval(str_replace(',', '.', $_POST['price'])) : 0.00;
 
     // Upload das Imagens
-    $image_urls = [null, null, null, null, null];
+    $image_urls = [
+        $produto['image_url'],
+        $produto['image_url_2'] ?? null,
+        $produto['image_url_3'] ?? null,
+        $produto['image_url_4'] ?? null,
+        $produto['image_url_5'] ?? null
+    ];
     $main_index = isset($_POST['main_image_index']) ? (int)$_POST['main_image_index'] : 0;
-    
+
     if (isset($_FILES['product_images']) && !empty($_FILES['product_images']['name'][0])) {
         $upload_dir = 'uploads/products/';
         
@@ -81,6 +104,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if (empty($mensagem_erro)) {
+            // Excluir imagens antigas
+            foreach ($image_urls as $old_img) {
+                if (!empty($old_img) && file_exists($old_img)) {
+                    unlink($old_img);
+                }
+            }
+            
+            // Resetar array de imagens
+            $image_urls = [null, null, null, null, null];
+            
             $current_slot = 1;
             foreach ($uploaded_paths as $original_index => $path) {
                 if ($original_index === $main_index) {
@@ -111,21 +144,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($mensagem_erro)) {
         try {
-            $stmt = $pdo->prepare("INSERT INTO products 
-                (manufacturer_id, category_id, type, name, description, weight, dimensions, volume, customizable, price, min_quantity, additional_notes, image_url, image_url_2, image_url_3, image_url_4, image_url_5) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("UPDATE products SET 
+                category_id = ?, type = ?, name = ?, description = ?, weight = ?, dimensions = ?, volume = ?, customizable = ?, price = ?, min_quantity = ?, additional_notes = ?, image_url = ?, image_url_2 = ?, image_url_3 = ?, image_url_4 = ?, image_url_5 = ?
+                WHERE id = ? AND manufacturer_id = ?");
                 
             $stmt->execute([
-                $user_id, $category_id, $type, $name, $description, $weight, $dimensions, $volume, $customizable, $price, $min_quantity, $additional_notes, 
-                $image_urls[0], $image_urls[1], $image_urls[2], $image_urls[3], $image_urls[4]
+                $category_id, $type, $name, $description, $weight, $dimensions, $volume, $customizable, $price, $min_quantity, $additional_notes, 
+                $image_urls[0], $image_urls[1], $image_urls[2], $image_urls[3], $image_urls[4],
+                $produto_id, $user_id
             ]);
             
-            $mensagem_sucesso = "Produto cadastrado com sucesso!";
-            // Limpar POST para não preencher o form novamente
-            $_POST = array();
+            $mensagem_sucesso = "Produto atualizado com sucesso!";
+            
+            // Atualizar os dados locais para exibir no formulário
+            $produto['name'] = $name;
+            $produto['category_id'] = $category_id;
+            $produto['type'] = $type;
+            $produto['description'] = $description;
+            $produto['weight'] = $weight;
+            $produto['dimensions'] = $dimensions;
+            $produto['volume'] = $volume;
+            $produto['customizable'] = $customizable;
+            $produto['min_quantity'] = $min_quantity;
+            $produto['additional_notes'] = $additional_notes;
+            $produto['image_url'] = $image_urls[0];
+            $produto['image_url_2'] = $image_urls[1];
+            $produto['image_url_3'] = $image_urls[2];
+            $produto['image_url_4'] = $image_urls[3];
+            $produto['image_url_5'] = $image_urls[4];
             
         } catch (PDOException $e) {
-            $mensagem_erro = "Erro ao salvar no banco de dados: " . $e->getMessage();
+            $mensagem_erro = "Erro ao atualizar no banco de dados: " . $e->getMessage();
         }
     }
 }
@@ -135,7 +184,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastrar Novo Produto - PACKGATE</title>
+    <title>Editar Produto - PACKGATE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -185,8 +234,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                     Voltar
                 </a>
-                <h1 class="text-3xl font-black text-brand-darkblue tracking-tight">Cadastrar Novo Produto</h1>
-                <p class="text-gray-500 mt-1">Adicione um novo produto ao seu catálogo</p>
+                <h1 class="text-3xl font-black text-brand-darkblue tracking-tight">Editar Produto</h1>
+                <p class="text-gray-500 mt-1">Atualize as informações do seu produto</p>
             </div>
 
             <?php if ($mensagem_sucesso): ?>
@@ -208,17 +257,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
 
             <!-- Formulário -->
-            <form action="cadastrar_produto.php" method="POST" enctype="multipart/form-data" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <form action="editar_produto.php?id=<?php echo $produto_id; ?>" method="POST" enctype="multipart/form-data" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 
                 <div class="p-8">
                     <h3 class="text-xl font-bold text-gray-900 mb-1">Informações do Produto</h3>
-                    <p class="text-sm text-gray-500 mb-8">Preencha todos os campos obrigatórios para cadastrar seu produto</p>
+                    <p class="text-sm text-gray-500 mb-8">Preencha todos os campos obrigatórios para atualizar seu produto</p>
 
                     <div class="space-y-6">
                         <!-- Nome do Produto -->
                         <div>
                             <label class="block text-sm font-bold text-gray-900 mb-2">Nome do Produto <span class="text-red-500">*</span></label>
-                            <input type="text" name="name" required placeholder="Ex: Caixa de papelão ondulado" value="<?php echo htmlspecialchars($_POST['name'] ?? ''); ?>"
+                            <input type="text" name="name" required placeholder="Ex: Caixa de papelão ondulado" value="<?php echo htmlspecialchars($produto['name'] ?? ''); ?>"
                                 class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-gray-700">
                         </div>
 
@@ -227,9 +276,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div>
                                 <label class="block text-sm font-bold text-gray-900 mb-2">Categoria <span class="text-red-500">*</span></label>
                                 <select name="category_id" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-gray-700 bg-white appearance-none">
-                                    <option value="" disabled selected>Selecione uma categoria</option>
+                                    <option value="" disabled>Selecione uma categoria</option>
                                     <?php foreach ($categorias as $cat): ?>
-                                        <option value="<?php echo $cat['id']; ?>" <?php echo (isset($_POST['category_id']) && $_POST['category_id'] == $cat['id']) ? 'selected' : ''; ?>>
+                                        <option value="<?php echo $cat['id']; ?>" <?php echo ($produto['category_id'] == $cat['id']) ? 'selected' : ''; ?>>
                                             <?php echo htmlspecialchars($cat['name']); ?>
                                         </option>
                                     <?php endforeach; ?>
@@ -237,7 +286,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                             <div>
                                 <label class="block text-sm font-bold text-gray-900 mb-2">Tipo <span class="text-red-500">*</span></label>
-                                <input type="text" name="type" required placeholder="Ex: Kraft, Reciclado, etc." value="<?php echo htmlspecialchars($_POST['type'] ?? ''); ?>"
+                                <input type="text" name="type" required placeholder="Ex: Kraft, Reciclado, etc." value="<?php echo htmlspecialchars($produto['type'] ?? ''); ?>"
                                     class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-gray-700">
                             </div>
                         </div>
@@ -246,24 +295,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div>
                             <label class="block text-sm font-bold text-gray-900 mb-2">Descrição do Produto <span class="text-red-500">*</span></label>
                             <textarea name="description" required rows="4" placeholder="Descreva seu produto em detalhes..." 
-                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-gray-700 resize-y"><?php echo htmlspecialchars($_POST['description'] ?? ''); ?></textarea>
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-gray-700 resize-y"><?php echo htmlspecialchars($produto['description'] ?? ''); ?></textarea>
                         </div>
 
                         <!-- Medidas (Peso, Dimensões, Volume) -->
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div>
                                 <label class="block text-sm font-bold text-gray-900 mb-2">Peso</label>
-                                <input type="text" name="weight" placeholder="Ex: 150g, 2kg" value="<?php echo htmlspecialchars($_POST['weight'] ?? ''); ?>"
+                                <input type="text" name="weight" placeholder="Ex: 150g, 2kg" value="<?php echo htmlspecialchars($produto['weight'] ?? ''); ?>"
                                     class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-gray-700">
                             </div>
                             <div>
                                 <label class="block text-sm font-bold text-gray-900 mb-2">Dimensões</label>
-                                <input type="text" name="dimensions" placeholder="Ex: 30x20x15cm" value="<?php echo htmlspecialchars($_POST['dimensions'] ?? ''); ?>"
+                                <input type="text" name="dimensions" placeholder="Ex: 30x20x15cm" value="<?php echo htmlspecialchars($produto['dimensions'] ?? ''); ?>"
                                     class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-gray-700">
                             </div>
                             <div>
                                 <label class="block text-sm font-bold text-gray-900 mb-2">Volume/Capacidade</label>
-                                <input type="text" name="volume" placeholder="Ex: 500ml, 2L" value="<?php echo htmlspecialchars($_POST['volume'] ?? ''); ?>"
+                                <input type="text" name="volume" placeholder="Ex: 500ml, 2L" value="<?php echo htmlspecialchars($produto['volume'] ?? ''); ?>"
                                     class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-gray-700">
                             </div>
                         </div>
@@ -274,18 +323,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <label class="block text-sm font-bold text-gray-900 mb-3">Permite Personalização? <span class="text-red-500">*</span></label>
                                 <div class="flex gap-6">
                                     <label class="flex items-center gap-2 cursor-pointer">
-                                        <input type="radio" name="customizable" value="1" <?php echo (isset($_POST['customizable']) && $_POST['customizable'] === '1') ? 'checked' : ''; ?> class="w-4 h-4 text-brand-green focus:ring-brand-green border-gray-300">
+                                        <input type="radio" name="customizable" value="1" <?php echo ($produto['customizable'] == 1) ? 'checked' : ''; ?> class="w-4 h-4 text-brand-green focus:ring-brand-green border-gray-300">
                                         <span class="text-gray-700">Sim</span>
                                     </label>
                                     <label class="flex items-center gap-2 cursor-pointer">
-                                        <input type="radio" name="customizable" value="0" <?php echo (!isset($_POST['customizable']) || $_POST['customizable'] === '0') ? 'checked' : ''; ?> class="w-4 h-4 text-brand-green focus:ring-brand-green border-gray-300">
+                                        <input type="radio" name="customizable" value="0" <?php echo ($produto['customizable'] == 0) ? 'checked' : ''; ?> class="w-4 h-4 text-brand-green focus:ring-brand-green border-gray-300">
                                         <span class="text-gray-700">Não</span>
                                     </label>
                                 </div>
                             </div>
                             <div>
                                 <label class="block text-sm font-bold text-gray-900 mb-2">Pedido Mínimo</label>
-                                <input type="text" name="min_quantity" placeholder="Ex: 1.000 unidades, 100 peças" value="<?php echo htmlspecialchars($_POST['min_quantity'] ?? ''); ?>"
+                                <input type="text" name="min_quantity" placeholder="Ex: 1.000 unidades, 100 peças" value="<?php echo htmlspecialchars($produto['min_quantity'] ?? ''); ?>"
                                     class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-gray-700">
                             </div>
                         </div>
@@ -294,23 +343,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div>
                             <label class="block text-sm font-bold text-gray-900 mb-2">Observações Adicionais</label>
                             <textarea name="additional_notes" rows="3" placeholder="Informações extras sobre o produto..." 
-                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-gray-700 resize-y"><?php echo htmlspecialchars($_POST['additional_notes'] ?? ''); ?></textarea>
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-gray-700 resize-y"><?php echo htmlspecialchars($produto['additional_notes'] ?? ''); ?></textarea>
                         </div>
 
                         <!-- Imagens do Produto -->
                         <div>
                             <label class="block text-sm font-bold text-gray-900 mb-2">Imagens do Produto (Até 5 imagens)</label>
                             
-                            <input type="hidden" name="main_image_index" id="main-image-index" value="0">
+                            <?php 
+                            $existing_images = array_filter([
+                                $produto['image_url'],
+                                $produto['image_url_2'] ?? null,
+                                $produto['image_url_3'] ?? null,
+                                $produto['image_url_4'] ?? null,
+                                $produto['image_url_5'] ?? null
+                            ]);
+                            ?>
                             
+                            <?php if (!empty($existing_images)): ?>
+                                <div class="mb-6">
+                                    <p class="text-sm text-gray-500 mb-2">Imagens Atuais:</p>
+                                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                                        <?php foreach ($existing_images as $index => $img): ?>
+                                            <div class="relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200">
+                                                <img src="<?php echo htmlspecialchars($img); ?>" alt="Imagem do Produto" class="w-full h-full object-cover">
+                                                <?php if ($index === 0): ?>
+                                                    <div class="absolute top-2 right-2 bg-brand-green text-white text-xs font-bold px-2 py-1 rounded shadow-sm">Principal</div>
+                                                <?php endif; ?>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                    <p class="text-xs text-orange-500 mt-2 font-medium">Atenção: Ao selecionar novas imagens, todas as imagens atuais serão substituídas.</p>
+                                </div>
+                            <?php endif; ?>
+
+                            <input type="hidden" name="main_image_index" id="main-image-index" value="0">
+
                             <div class="file-drop-area relative border-2 border-dashed border-gray-300 rounded-xl p-10 text-center hover:bg-gray-50 transition cursor-pointer" id="drop-area">
                                 <input type="file" name="product_images[]" id="file-input" accept="image/png, image/jpeg, image/webp" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
                                 
                                 <div class="flex flex-col items-center justify-center pointer-events-none">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 mb-3"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
-                                    <p class="text-sm font-medium text-gray-700 mb-1">Clique para adicionar imagens ou arraste e solte aqui</p>
+                                    <p class="text-sm font-medium text-gray-700 mb-1">Clique para alterar as imagens ou arraste e solte aqui</p>
                                     <p class="text-xs text-gray-500 mb-4">Formatos aceitos: JPEG, PNG, WEBP (máx. 1MB cada)</p>
-                                    <button type="button" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 shadow-sm">Selecionar Imagens</button>
+                                    <button type="button" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 shadow-sm">Selecionar Novas Imagens</button>
                                 </div>
                             </div>
                             
@@ -323,7 +399,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                                     A primeira imagem selecionada será a principal por padrão. Clique em uma imagem para torná-la principal.
                                 </p>
-                                <p class="text-xs text-gray-500" id="file-name-display">Nenhuma imagem selecionada</p>
+                                <p class="text-xs text-gray-500" id="file-name-display">Nenhuma nova imagem selecionada</p>
                             </div>
                         </div>
 
@@ -336,8 +412,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         Cancelar
                     </a>
                     <button type="submit" class="px-6 py-2.5 text-sm font-bold text-white bg-brand-darkblue hover:bg-blue-900 rounded-lg transition shadow-sm flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
-                        Cadastrar Produto
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                        Salvar Alterações
                     </button>
                 </div>
             </form>
@@ -363,14 +439,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mainIndex = 0; // Reset main index to first image
                 mainImageIndexInput.value = 0;
                 
-                fileNameDisplay.textContent = filesToProcess.length + ' imagem(ns) selecionada(s)';
+                fileNameDisplay.textContent = filesToProcess.length + ' nova(s) imagem(ns) selecionada(s)';
                 fileNameDisplay.classList.add('text-brand-green', 'font-medium');
                 fileNameDisplay.classList.remove('text-gray-500');
                 
                 renderPreviews();
             } else {
                 selectedFiles = [];
-                fileNameDisplay.textContent = 'Nenhuma imagem selecionada';
+                fileNameDisplay.textContent = 'Nenhuma nova imagem selecionada';
                 fileNameDisplay.classList.remove('text-brand-green', 'font-medium');
                 fileNameDisplay.classList.add('text-gray-500');
                 previewContainer.innerHTML = '';
