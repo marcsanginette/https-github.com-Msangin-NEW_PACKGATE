@@ -30,8 +30,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['user_name'] = $user['name'];
                 $_SESSION['user_role'] = $user['role'];
                 
-                // Redireciona para a página inicial (ou painel específico no futuro)
-                header("Location: index.php");
+                // Redireciona com base no perfil
+                if ($user['role'] === 'comprador') {
+                    header("Location: dashboard_comprador.php");
+                } elseif ($user['role'] === 'fabricante') {
+                    header("Location: dashboard_fabricante.php"); // Criaremos depois
+                } else {
+                    header("Location: index.php"); // Admin ou fallback
+                }
                 exit;
             } else {
                 $error = "Email ou senha incorretos.";
