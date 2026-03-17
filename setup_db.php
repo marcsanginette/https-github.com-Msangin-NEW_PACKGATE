@@ -64,6 +64,14 @@ try {
         // Ignora se a coluna já existir
     }
 
+    // Tentar adicionar a coluna category_id
+    try {
+        $pdo->exec("ALTER TABLE products ADD COLUMN category_id INT AFTER manufacturer_id;");
+        $pdo->exec("ALTER TABLE products ADD CONSTRAINT fk_category FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL;");
+    } catch (PDOException $e) {
+        // Ignora se a coluna já existir
+    }
+
     // Tentar adicionar as novas colunas caso a tabela já exista (evita erros se o usuário já rodou o script antes)
     try {
         $pdo->exec("ALTER TABLE products 
