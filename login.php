@@ -49,6 +49,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - PACKGATE</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-green': '#8DC63F',
+                        'brand-darkblue': '#1A237E',
+                        'brand-lightgreen': '#C5E1A5',
+                        'brand-olive': '#558B2F'
+                    }
+                }
+            }
+        }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -58,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <div class="w-full max-w-md">
         <!-- Voltar -->
-        <a href="index.php" class="flex items-center justify-center gap-2 text-blue-600 hover:text-blue-800 font-medium mb-8 transition">
+        <a href="index.php" class="flex items-center justify-center gap-2 text-brand-green hover:text-brand-olive font-medium mb-8 transition">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
             Voltar ao início
         </a>
@@ -83,14 +97,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div>
                     <label class="block text-sm font-bold text-gray-900 mb-1.5" for="email">Email</label>
                     <input type="email" id="email" name="email" placeholder="seu@email.com" required
-                        class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition text-gray-700">
+                        class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-gray-700">
                 </div>
 
                 <div>
                     <label class="block text-sm font-bold text-gray-900 mb-1.5" for="password">Senha</label>
                     <div class="relative">
                         <input type="password" id="password" name="password" placeholder="Sua senha" required
-                            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition text-gray-700 pr-10">
+                            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-gray-700 pr-10">
                         <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                         </button>
@@ -98,20 +112,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <div class="flex items-center">
-                    <input type="checkbox" id="remember" name="remember" class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-600 cursor-pointer">
+                    <input type="checkbox" id="remember" name="remember" class="w-4 h-4 text-brand-green border-gray-300 rounded focus:ring-brand-green cursor-pointer">
                     <label for="remember" class="ml-2 text-sm font-medium text-gray-900 cursor-pointer">Lembrar-me neste dispositivo</label>
                 </div>
 
-                <button type="submit" class="w-full bg-[#2563eb] hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition duration-200">
+                <button type="submit" class="w-full bg-brand-green hover:bg-brand-olive text-white font-medium py-3 rounded-lg transition duration-200">
                     Entrar
                 </button>
             </form>
 
             <div class="mt-6 text-center space-y-4">
-                <a href="#" class="block text-sm text-blue-600 hover:underline">Esqueci minha senha</a>
+                <a href="#" class="block text-sm text-brand-green hover:underline">Esqueci minha senha</a>
                 
                 <p class="text-sm text-gray-600">
-                    Não tem uma conta? <a href="cadastro.php" class="text-blue-600 font-medium hover:underline">Cadastre-se</a>
+                    Não tem uma conta? <a href="cadastro.php" class="text-brand-green font-medium hover:underline">Cadastre-se</a>
                 </p>
 
                 <div class="flex items-center justify-center gap-1.5 text-xs text-gray-500 pt-2">

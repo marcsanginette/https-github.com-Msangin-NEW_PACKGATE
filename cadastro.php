@@ -67,6 +67,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastro - PACKGATE</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-green': '#8DC63F',
+                        'brand-darkblue': '#1A237E',
+                        'brand-lightgreen': '#C5E1A5',
+                        'brand-olive': '#558B2F'
+                    }
+                }
+            }
+        }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -79,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <div class="w-full max-w-2xl">
         <!-- Voltar -->
-        <a href="index.php" class="flex items-center justify-center gap-2 text-blue-600 hover:text-blue-800 font-medium mb-8 transition">
+        <a href="index.php" class="flex items-center justify-center gap-2 text-brand-green hover:text-brand-olive font-medium mb-8 transition">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
             Voltar ao início
         </a>
@@ -121,7 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                     <!-- Comprador Btn -->
                     <button type="button" id="btn_comprador" onclick="setRole('comprador')" 
-                        class="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-blue-600 bg-blue-50 text-blue-700 transition cursor-pointer">
+                        class="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-brand-green bg-brand-lightgreen/30 text-brand-darkblue transition cursor-pointer">
                         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mb-2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                         <span class="font-bold">Comprador</span>
                         <span class="text-xs opacity-80 mt-1">Solicite orçamentos de embalagens</span>
@@ -129,7 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <!-- Fabricante Btn -->
                     <button type="button" id="btn_fabricante" onclick="setRole('fabricante')" 
-                        class="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-gray-200 text-gray-500 hover:border-blue-300 transition cursor-pointer">
+                        class="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-gray-200 text-gray-500 hover:border-brand-green transition cursor-pointer">
                         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mb-2"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M17 18h1"/><path d="M12 18h1"/><path d="M7 18h1"/></svg>
                         <span class="font-bold">Fabricante</span>
                         <span class="text-xs opacity-80 mt-1">Venda seus produtos de embalagem</span>
@@ -141,12 +155,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div>
                         <label class="block text-sm font-bold text-gray-900 mb-1.5">Nome Completo*</label>
                         <input type="text" name="name" placeholder="Seu nome completo" required
-                            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition text-gray-700">
+                            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-gray-700">
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-gray-900 mb-1.5">Email*</label>
                         <input type="email" name="email" placeholder="seu@email.com" required
-                            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition text-gray-700">
+                            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-gray-700">
                     </div>
                 </div>
 
@@ -154,7 +168,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label class="block text-sm font-bold text-gray-900 mb-1.5">Senha</label>
                     <div class="relative">
                         <input type="password" name="password" placeholder="Sua senha segura" required
-                            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition text-gray-700 pr-10">
+                            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-gray-700 pr-10">
                         <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                         </button>
@@ -165,12 +179,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div>
                         <label id="label_empresa" class="block text-sm font-bold text-gray-900 mb-1.5">Empresa (Opcional)</label>
                         <input type="text" name="company_name" placeholder="Nome da empresa"
-                            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition text-gray-700">
+                            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-gray-700">
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-gray-900 mb-1.5">Telefone</label>
                         <input type="text" name="phone" placeholder="(11) 99999-9999"
-                            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition text-gray-700">
+                            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-gray-700">
                     </div>
                 </div>
 
@@ -179,23 +193,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div>
                         <label class="block text-sm font-bold text-gray-900 mb-1.5">CNPJ*</label>
                         <input type="text" name="cnpj" placeholder="00.000.000/0000-00"
-                            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition text-gray-700">
+                            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-gray-700">
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-gray-900 mb-1.5">Descrição da Empresa</label>
                         <textarea name="description" rows="3" placeholder="Conte sobre sua empresa e produtos"
-                            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition text-gray-700"></textarea>
+                            class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-gray-700"></textarea>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
                             <label class="block text-sm font-bold text-gray-900 mb-1.5">Quantidade de Funcionários*</label>
                             <input type="text" name="employees_count" placeholder="Ex: 50"
-                                class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition text-gray-700">
+                                class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-gray-700">
                         </div>
                         <div>
                             <label class="block text-sm font-bold text-gray-900 mb-1.5">Faturamento Anual*</label>
                             <input type="text" name="annual_revenue" placeholder="Ex: R$ 1.000.000"
-                                class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition text-gray-700">
+                                class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-gray-700">
                         </div>
                     </div>
                 </div>
@@ -218,18 +232,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <div class="flex items-center mb-6">
-                    <input type="checkbox" id="accept_terms" name="accept_terms" required class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-600 cursor-pointer">
+                    <input type="checkbox" id="accept_terms" name="accept_terms" required class="w-4 h-4 text-brand-green border-gray-300 rounded focus:ring-brand-green cursor-pointer">
                     <label for="accept_terms" class="ml-2 text-sm text-gray-700 cursor-pointer">Declaro que li e aceito os Termos e Condições acima</label>
                 </div>
 
-                <button type="submit" id="btn_submit" class="w-full bg-[#8ba5e3] hover:bg-blue-600 text-white font-bold py-3.5 rounded-lg transition duration-200">
+                <button type="submit" id="btn_submit" class="w-full bg-brand-lightgreen hover:bg-brand-green text-white font-bold py-3.5 rounded-lg transition duration-200">
                     Criar Conta
                 </button>
             </form>
 
             <div class="mt-6 text-center">
                 <p class="text-sm text-gray-600">
-                    Já tem uma conta? <a href="login.php" class="text-blue-600 font-medium hover:underline">Faça login</a>
+                    Já tem uma conta? <a href="login.php" class="text-brand-green font-medium hover:underline">Faça login</a>
                 </p>
             </div>
         </div>
@@ -249,8 +263,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (role === 'comprador') {
                 // Estilo Comprador Ativo
-                btnComprador.className = "flex flex-col items-center justify-center p-4 rounded-xl border-2 border-blue-600 bg-blue-50 text-blue-700 transition cursor-pointer";
-                btnFabricante.className = "flex flex-col items-center justify-center p-4 rounded-xl border-2 border-gray-200 text-gray-500 hover:border-blue-300 transition cursor-pointer";
+                btnComprador.className = "flex flex-col items-center justify-center p-4 rounded-xl border-2 border-brand-green bg-brand-lightgreen/30 text-brand-darkblue transition cursor-pointer";
+                btnFabricante.className = "flex flex-col items-center justify-center p-4 rounded-xl border-2 border-gray-200 text-gray-500 hover:border-brand-green transition cursor-pointer";
                 
                 // Ocultar campos de fabricante
                 fieldsFabricante.classList.add('hidden');
@@ -269,8 +283,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 `;
             } else {
                 // Estilo Fabricante Ativo
-                btnFabricante.className = "flex flex-col items-center justify-center p-4 rounded-xl border-2 border-blue-600 bg-blue-50 text-blue-700 transition cursor-pointer";
-                btnComprador.className = "flex flex-col items-center justify-center p-4 rounded-xl border-2 border-gray-200 text-gray-500 hover:border-blue-300 transition cursor-pointer";
+                btnFabricante.className = "flex flex-col items-center justify-center p-4 rounded-xl border-2 border-brand-green bg-brand-lightgreen/30 text-brand-darkblue transition cursor-pointer";
+                btnComprador.className = "flex flex-col items-center justify-center p-4 rounded-xl border-2 border-gray-200 text-gray-500 hover:border-brand-green transition cursor-pointer";
                 
                 // Mostrar campos de fabricante
                 fieldsFabricante.classList.remove('hidden');
@@ -296,11 +310,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         checkbox.addEventListener('change', function() {
             if(this.checked) {
-                btnSubmit.classList.remove('bg-[#8ba5e3]');
-                btnSubmit.classList.add('bg-[#2563eb]');
+                btnSubmit.classList.remove('bg-brand-lightgreen');
+                btnSubmit.classList.add('bg-brand-green');
             } else {
-                btnSubmit.classList.remove('bg-[#2563eb]');
-                btnSubmit.classList.add('bg-[#8ba5e3]');
+                btnSubmit.classList.remove('bg-brand-green');
+                btnSubmit.classList.add('bg-brand-lightgreen');
             }
         });
     </script>
