@@ -126,97 +126,177 @@ $user_name = explode(' ', trim($_SESSION['user_name']))[0];
                 <div class="flex flex-col md:flex-row gap-6 h-full">
                     <!-- Filtros Laterais -->
                     <div class="w-full md:w-64 bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex-shrink-0 h-fit">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="font-bold text-gray-900">Filtros</h3>
-                            <button class="text-xs text-brand-green hover:underline">Limpar</button>
-                        </div>
-                        
-                        <div class="space-y-6">
-                            <div>
-                                <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Ordenar por</label>
-                                <select class="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-green focus:border-brand-green p-2 border outline-none">
-                                    <option>Mais Recentes</option>
-                                    <option>Aleatório</option>
-                                    <option>Menor Preço</option>
-                                    <option>Maior Preço</option>
-                                </select>
+                        <form method="GET" action="dashboard_comprador.php" id="searchForm">
+                            <input type="hidden" name="tab" value="produtos">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-bold text-gray-900">Filtros</h3>
+                                <a href="dashboard_comprador.php?tab=produtos" class="text-xs text-brand-green hover:underline">Limpar</a>
                             </div>
+                            
+                            <div class="space-y-6">
+                                <div>
+                                    <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Ordenar por</label>
+                                    <select name="sort" class="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-green focus:border-brand-green p-2 border outline-none" onchange="document.getElementById('searchForm').submit()">
+                                        <option value="recent" <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'recent') ? 'selected' : ''; ?>>Mais Recentes</option>
+                                        <option value="price_asc" <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'price_asc') ? 'selected' : ''; ?>>Menor Preço</option>
+                                        <option value="price_desc" <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'price_desc') ? 'selected' : ''; ?>>Maior Preço</option>
+                                    </select>
+                                </div>
 
-                            <div>
-                                <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Categoria</label>
-                                <div class="space-y-2">
-                                    <label class="flex items-center text-sm text-gray-700"><input type="checkbox" class="mr-2 text-brand-green focus:ring-brand-green rounded"> Papelão (12)</label>
-                                    <label class="flex items-center text-sm text-gray-700"><input type="checkbox" class="mr-2 text-brand-green focus:ring-brand-green rounded"> Plástico (8)</label>
-                                    <label class="flex items-center text-sm text-gray-700"><input type="checkbox" class="mr-2 text-brand-green focus:ring-brand-green rounded"> Vidro (5)</label>
-                                    <label class="flex items-center text-sm text-gray-700"><input type="checkbox" class="mr-2 text-brand-green focus:ring-brand-green rounded"> Sustentável (15)</label>
+                                <div>
+                                    <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Categoria</label>
+                                    <select name="category" class="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-green focus:border-brand-green p-2 border outline-none" onchange="document.getElementById('searchForm').submit()">
+                                        <option value="">Todas as Categorias</option>
+                                        <?php
+                                        $stmt_cat = $pdo->query("SELECT id, name FROM categories ORDER BY name ASC");
+                                        while ($cat = $stmt_cat->fetch(PDO::FETCH_ASSOC)) {
+                                            $selected = (isset($_GET['category']) && $_GET['category'] == $cat['id']) ? 'selected' : '';
+                                            echo "<option value=\"{$cat['id']}\" $selected>" . htmlspecialchars($cat['name']) . "</option>";
+                                        }
+                                        ?>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Tipo</label>
+                                    <div class="space-y-2">
+                                        <?php
+                                        $types = ['Papelão', 'Plástico', 'Vidro', 'Sustentável', 'Metal', 'Madeira', 'Outro'];
+                                        $selected_types = isset($_GET['type']) ? $_GET['type'] : [];
+                                        foreach ($types as $t) {
+                                            $checked = in_array($t, $selected_types) ? 'checked' : '';
+                                            echo "<label class=\"flex items-center text-sm text-gray-700\"><input type=\"checkbox\" name=\"type[]\" value=\"$t\" $checked class=\"mr-2 text-brand-green focus:ring-brand-green rounded\" onchange=\"document.getElementById('searchForm').submit()\"> $t</label>";
+                                        }
+                                        ?>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Personalização</label>
+                                    <div class="space-y-2">
+                                        <label class="flex items-center text-sm text-gray-700">
+                                            <input type="radio" name="customizable" value="" <?php echo (!isset($_GET['customizable']) || $_GET['customizable'] === '') ? 'checked' : ''; ?> class="mr-2 text-brand-green focus:ring-brand-green" onchange="document.getElementById('searchForm').submit()"> Todos
+                                        </label>
+                                        <label class="flex items-center text-sm text-gray-700">
+                                            <input type="radio" name="customizable" value="1" <?php echo (isset($_GET['customizable']) && $_GET['customizable'] === '1') ? 'checked' : ''; ?> class="mr-2 text-brand-green focus:ring-brand-green" onchange="document.getElementById('searchForm').submit()"> Personalizável
+                                        </label>
+                                        <label class="flex items-center text-sm text-gray-700">
+                                            <input type="radio" name="customizable" value="0" <?php echo (isset($_GET['customizable']) && $_GET['customizable'] === '0') ? 'checked' : ''; ?> class="mr-2 text-brand-green focus:ring-brand-green" onchange="document.getElementById('searchForm').submit()"> Padrão
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Volume / Capacidade</label>
+                                    <input type="text" name="volume" value="<?php echo isset($_GET['volume']) ? htmlspecialchars($_GET['volume']) : ''; ?>" placeholder="Ex: 500ml, 2L" class="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-green focus:border-brand-green p-2 border outline-none">
+                                    <button type="submit" class="mt-2 w-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold py-2 rounded transition">Aplicar Filtro</button>
                                 </div>
                             </div>
-
-                            <div>
-                                <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Quantidade Mínima</label>
-                                <input type="range" min="100" max="10000" class="w-full accent-brand-green">
-                                <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                    <span>100 un</span>
-                                    <span>10.000+ un</span>
-                                </div>
-                            </div>
-                        </div>
+                        </form>
                     </div>
 
                     <!-- Grid de Produtos -->
                     <div class="flex-1">
-                        <div class="relative mb-6">
-                            <input type="text" placeholder="Buscar por nome, material ou fabricante..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none shadow-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                        </div>
+                        <form method="GET" action="dashboard_comprador.php" class="relative mb-6">
+                            <input type="hidden" name="tab" value="produtos">
+                            <?php if (isset($_GET['sort'])): ?>
+                                <input type="hidden" name="sort" value="<?php echo htmlspecialchars($_GET['sort']); ?>">
+                            <?php endif; ?>
+                            <?php if (isset($_GET['type'])): ?>
+                                <?php foreach ($_GET['type'] as $t): ?>
+                                    <input type="hidden" name="type[]" value="<?php echo htmlspecialchars($t); ?>">
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                            <input type="text" name="q" value="<?php echo isset($_GET['q']) ? htmlspecialchars($_GET['q']) : ''; ?>" placeholder="Buscar por nome, material ou fabricante..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none shadow-sm">
+                            <button type="submit" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-green">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                            </button>
+                        </form>
 
-                        <!-- Mock Grid -->
+                        <?php
+                        // Construir a query de busca
+                        $query = "SELECT p.*, u.company_name, u.name as manufacturer_name 
+                                  FROM products p 
+                                  JOIN users u ON p.manufacturer_id = u.id 
+                                  WHERE p.status = 'approved'";
+                        $params = [];
+
+                        // Filtro de busca por texto
+                        if (!empty($_GET['q'])) {
+                            $query .= " AND (p.name LIKE ? OR p.type LIKE ? OR u.company_name LIKE ? OR u.name LIKE ?)";
+                            $search_term = '%' . $_GET['q'] . '%';
+                            $params[] = $search_term;
+                            $params[] = $search_term;
+                            $params[] = $search_term;
+                            $params[] = $search_term;
+                        }
+
+                        // Filtro por categoria
+                        if (!empty($_GET['category'])) {
+                            $query .= " AND p.category_id = ?";
+                            $params[] = $_GET['category'];
+                        }
+
+                        // Filtro por tipo
+                        if (!empty($_GET['type']) && is_array($_GET['type'])) {
+                            $in_placeholders = str_repeat('?,', count($_GET['type']) - 1) . '?';
+                            $query .= " AND p.type IN ($in_placeholders)";
+                            $params = array_merge($params, $_GET['type']);
+                        }
+
+                        // Filtro por personalização
+                        if (isset($_GET['customizable']) && $_GET['customizable'] !== '') {
+                            $query .= " AND p.customizable = ?";
+                            $params[] = $_GET['customizable'];
+                        }
+
+                        // Filtro por volume
+                        if (!empty($_GET['volume'])) {
+                            $query .= " AND p.volume LIKE ?";
+                            $params[] = '%' . $_GET['volume'] . '%';
+                        }
+
+                        // Ordenação
+                        $sort = $_GET['sort'] ?? 'recent';
+                        if ($sort === 'price_asc') {
+                            $query .= " ORDER BY p.price ASC";
+                        } elseif ($sort === 'price_desc') {
+                            $query .= " ORDER BY p.price DESC";
+                        } else {
+                            $query .= " ORDER BY p.created_at DESC";
+                        }
+
+                        $stmt = $pdo->prepare($query);
+                        $stmt->execute($params);
+                        $produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                        ?>
+
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                            <!-- Produto 1 -->
-                            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition group">
-                                <div class="h-40 bg-gray-200 relative overflow-hidden">
-                                    <img src="https://images.unsplash.com/photo-1605000797499-95a51c5269ae?w=500&q=80" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="Produto">
-                                    <span class="absolute top-2 left-2 bg-white/90 text-xs font-bold px-2 py-1 rounded text-gray-700">Papelão</span>
+                            <?php if (empty($produtos)): ?>
+                                <div class="col-span-3 text-center py-10 text-gray-500">
+                                    Nenhum produto encontrado no momento.
                                 </div>
-                                <div class="p-4">
-                                    <h4 class="font-bold text-gray-900 mb-1">Caixa de Papelão Ondulado</h4>
-                                    <p class="text-xs text-gray-500 mb-3">Fabricante: EcoEmbalagens Ltda</p>
-                                    <div class="flex items-center justify-between">
-                                        <span class="text-brand-darkblue font-bold">R$ 2,50 <span class="text-xs font-normal text-gray-500">/un</span></span>
-                                        <button class="text-sm bg-brand-lightgreen text-brand-olive hover:bg-brand-green hover:text-white px-3 py-1.5 rounded-lg font-medium transition">Orçar</button>
+                            <?php else: ?>
+                                <?php foreach ($produtos as $prod): ?>
+                                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition group flex flex-col">
+                                        <div class="h-40 bg-gray-200 relative overflow-hidden">
+                                            <?php 
+                                            $img_src = !empty($prod['image_url']) ? htmlspecialchars($prod['image_url']) : 'https://via.placeholder.com/500x500?text=Sem+Imagem';
+                                            ?>
+                                            <img src="<?php echo $img_src; ?>" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="<?php echo htmlspecialchars($prod['name']); ?>">
+                                            <span class="absolute top-2 left-2 bg-white/90 text-xs font-bold px-2 py-1 rounded text-gray-700"><?php echo htmlspecialchars($prod['type']); ?></span>
+                                        </div>
+                                        <div class="p-4 flex flex-col flex-grow">
+                                            <h4 class="font-bold text-gray-900 mb-1 line-clamp-1" title="<?php echo htmlspecialchars($prod['name']); ?>"><?php echo htmlspecialchars($prod['name']); ?></h4>
+                                            <p class="text-xs text-gray-500 mb-3 line-clamp-1" title="<?php echo htmlspecialchars($prod['company_name'] ?: $prod['manufacturer_name']); ?>">Fabricante: <?php echo htmlspecialchars($prod['company_name'] ?: $prod['manufacturer_name']); ?></p>
+                                            <div class="mt-auto flex items-center justify-between">
+                                                <span class="text-xs text-gray-500">Mín: <?php echo htmlspecialchars($prod['min_quantity']); ?> un</span>
+                                                <a href="produto.php?id=<?php echo $prod['id']; ?>" class="text-sm bg-brand-lightgreen text-brand-olive hover:bg-brand-green hover:text-white px-3 py-1.5 rounded-lg font-medium transition">Orçar</a>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                            <!-- Produto 2 -->
-                            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition group">
-                                <div class="h-40 bg-gray-200 relative overflow-hidden">
-                                    <img src="https://images.unsplash.com/photo-1594035910387-fea47794261f?w=500&q=80" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="Produto">
-                                    <span class="absolute top-2 left-2 bg-white/90 text-xs font-bold px-2 py-1 rounded text-gray-700">Vidro</span>
-                                </div>
-                                <div class="p-4">
-                                    <h4 class="font-bold text-gray-900 mb-1">Frasco de Vidro 50ml</h4>
-                                    <p class="text-xs text-gray-500 mb-3">Fabricante: Vidros Premium</p>
-                                    <div class="flex items-center justify-between">
-                                        <span class="text-brand-darkblue font-bold">R$ 8,50 <span class="text-xs font-normal text-gray-500">/un</span></span>
-                                        <button class="text-sm bg-brand-lightgreen text-brand-olive hover:bg-brand-green hover:text-white px-3 py-1.5 rounded-lg font-medium transition">Orçar</button>
-                                    </div>
-                                </div>
-                            </div>
-                             <!-- Produto 3 -->
-                             <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition group">
-                                <div class="h-40 bg-gray-200 relative overflow-hidden">
-                                    <img src="https://images.unsplash.com/photo-1624372554743-162804798363?w=500&q=80" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="Produto">
-                                    <span class="absolute top-2 left-2 bg-white/90 text-xs font-bold px-2 py-1 rounded text-gray-700">Sustentável</span>
-                                </div>
-                                <div class="p-4">
-                                    <h4 class="font-bold text-gray-900 mb-1">Embalagem Biodegradável</h4>
-                                    <p class="text-xs text-gray-500 mb-3">Fabricante: GreenPack</p>
-                                    <div class="flex items-center justify-between">
-                                        <span class="text-brand-darkblue font-bold">R$ 1,20 <span class="text-xs font-normal text-gray-500">/un</span></span>
-                                        <button class="text-sm bg-brand-lightgreen text-brand-olive hover:bg-brand-green hover:text-white px-3 py-1.5 rounded-lg font-medium transition">Orçar</button>
-                                    </div>
-                                </div>
-                            </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </div>
 
                         <!-- Paginação -->
@@ -244,6 +324,21 @@ $user_name = explode(' ', trim($_SESSION['user_name']))[0];
                             </select>
                         </div>
                     </div>
+
+                    <?php
+                    // Buscar orçamentos do comprador
+                    $stmt = $pdo->prepare("
+                        SELECT q.*, p.name as product_name, u.company_name as manufacturer_company, u.name as manufacturer_name
+                        FROM quotes q
+                        JOIN products p ON q.product_id = p.id
+                        JOIN users u ON q.manufacturer_id = u.id
+                        WHERE q.buyer_id = ?
+                        ORDER BY q.created_at DESC
+                    ");
+                    $stmt->execute([$_SESSION['user_id']]);
+                    $buyer_quotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    ?>
+
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-sm text-gray-600">
                             <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
@@ -258,32 +353,43 @@ $user_name = explode(' ', trim($_SESSION['user_name']))[0];
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100">
-                                <tr class="hover:bg-gray-50 transition">
-                                    <td class="px-6 py-4 font-medium text-gray-900">#ORC-1042</td>
-                                    <td class="px-6 py-4">Caixa de Papelão Ondulado</td>
-                                    <td class="px-6 py-4">EcoEmbalagens Ltda</td>
-                                    <td class="px-6 py-4">5.000 un</td>
-                                    <td class="px-6 py-4">15/03/2026</td>
-                                    <td class="px-6 py-4">
-                                        <span class="bg-green-100 text-green-700 px-2.5 py-1 rounded-full text-xs font-bold">Respondido</span>
-                                    </td>
-                                    <td class="px-6 py-4 text-right">
-                                        <button onclick="openModal('modal-proposta')" class="text-brand-green hover:text-brand-olive font-medium text-sm">Ver Proposta</button>
-                                    </td>
-                                </tr>
-                                <tr class="hover:bg-gray-50 transition">
-                                    <td class="px-6 py-4 font-medium text-gray-900">#ORC-1043</td>
-                                    <td class="px-6 py-4">Frasco de Vidro 50ml</td>
-                                    <td class="px-6 py-4">Vidros Premium</td>
-                                    <td class="px-6 py-4">1.000 un</td>
-                                    <td class="px-6 py-4">16/03/2026</td>
-                                    <td class="px-6 py-4">
-                                        <span class="bg-yellow-100 text-yellow-700 px-2.5 py-1 rounded-full text-xs font-bold">Aguardando</span>
-                                    </td>
-                                    <td class="px-6 py-4 text-right">
-                                        <button class="text-gray-400 cursor-not-allowed font-medium text-sm" disabled>Ver Proposta</button>
-                                    </td>
-                                </tr>
+                                <?php if (empty($buyer_quotes)): ?>
+                                    <tr>
+                                        <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                                            Nenhum orçamento solicitado ainda.
+                                        </td>
+                                    </tr>
+                                <?php else: ?>
+                                    <?php foreach ($buyer_quotes as $quote): ?>
+                                        <tr class="hover:bg-gray-50 transition">
+                                            <td class="px-6 py-4 font-medium text-gray-900">#ORC-<?php echo str_pad($quote['id'], 4, '0', STR_PAD_LEFT); ?></td>
+                                            <td class="px-6 py-4"><?php echo htmlspecialchars($quote['product_name']); ?></td>
+                                            <td class="px-6 py-4"><?php echo htmlspecialchars($quote['manufacturer_company'] ?: $quote['manufacturer_name']); ?></td>
+                                            <td class="px-6 py-4 font-bold"><?php echo number_format($quote['quantity'], 0, ',', '.'); ?> un</td>
+                                            <td class="px-6 py-4"><?php echo date('d/m/Y', strtotime($quote['created_at'])); ?></td>
+                                            <td class="px-6 py-4">
+                                                <?php if ($quote['status'] === 'aguardando'): ?>
+                                                    <span class="bg-yellow-100 text-yellow-700 px-2.5 py-1 rounded-full text-xs font-bold">Aguardando</span>
+                                                <?php elseif ($quote['status'] === 'respondido'): ?>
+                                                    <span class="bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full text-xs font-bold">Respondido</span>
+                                                <?php elseif ($quote['status'] === 'recusado'): ?>
+                                                    <span class="bg-red-100 text-red-700 px-2.5 py-1 rounded-full text-xs font-bold">Recusado</span>
+                                                <?php elseif ($quote['status'] === 'aprovado'): ?>
+                                                    <span class="bg-green-100 text-green-700 px-2.5 py-1 rounded-full text-xs font-bold">Aprovado</span>
+                                                <?php elseif ($quote['status'] === 'pedido_criado'): ?>
+                                                    <span class="bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full text-xs font-bold">Pedido Criado</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="px-6 py-4 text-right">
+                                                <?php if ($quote['status'] === 'respondido'): ?>
+                                                    <a href="revisar_proposta.php?id=<?php echo $quote['id']; ?>" class="text-brand-green hover:text-brand-olive font-bold text-sm">Ver Proposta</a>
+                                                <?php else: ?>
+                                                    <a href="revisar_proposta.php?id=<?php echo $quote['id']; ?>" class="text-gray-500 hover:text-gray-700 font-medium text-sm">Detalhes</a>
+                                                <?php endif; ?>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
@@ -298,10 +404,25 @@ $user_name = explode(' ', trim($_SESSION['user_name']))[0];
                     <button class="px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap">Pendentes</button>
                     <button class="px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap">Em Produção</button>
                     <button class="px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap relative">
-                        Enviados <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+                        Enviados
                     </button>
                     <button class="px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap">Concluídos</button>
                 </div>
+
+                <?php
+                // Buscar pedidos do comprador
+                $stmt = $pdo->prepare("
+                    SELECT po.*, p.name as product_name, q.quantity, q.real_delivery_date, u.company_name as manufacturer_company, u.name as manufacturer_name
+                    FROM purchase_orders po
+                    JOIN quotes q ON po.quote_id = q.id
+                    JOIN products p ON q.product_id = p.id
+                    JOIN users u ON po.manufacturer_id = u.id
+                    WHERE po.buyer_id = ?
+                    ORDER BY po.created_at DESC
+                ");
+                $stmt->execute([$_SESSION['user_id']]);
+                $buyer_orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                ?>
 
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     <div class="overflow-x-auto">
@@ -310,6 +431,7 @@ $user_name = explode(' ', trim($_SESSION['user_name']))[0];
                                 <tr>
                                     <th class="px-6 py-4 font-medium">Pedido</th>
                                     <th class="px-6 py-4 font-medium">Produto</th>
+                                    <th class="px-6 py-4 font-medium">Fabricante</th>
                                     <th class="px-6 py-4 font-medium">Valor Total</th>
                                     <th class="px-6 py-4 font-medium">Previsão</th>
                                     <th class="px-6 py-4 font-medium">Status</th>
@@ -317,40 +439,47 @@ $user_name = explode(' ', trim($_SESSION['user_name']))[0];
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100">
-                                <!-- Pedido Enviado -->
-                                <tr class="hover:bg-gray-50 transition">
-                                    <td class="px-6 py-4 font-medium text-gray-900">#PO-9921</td>
-                                    <td class="px-6 py-4">Tambor Metálico 200L (x50)</td>
-                                    <td class="px-6 py-4 font-medium">R$ 7.500,00</td>
-                                    <td class="px-6 py-4">18/03/2026</td>
-                                    <td class="px-6 py-4">
-                                        <span class="bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1 w-fit">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18H3c-.6 0-1-.4-1-1V7c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v11"/><path d="M14 9h4l4 4v4c0 .6-.4 1-1 1h-2"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>
-                                            Enviado
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 text-right">
-                                        <button onclick="openModal('modal-avaliacao')" class="bg-brand-green hover:bg-brand-olive text-white px-4 py-2 rounded-lg text-xs font-bold transition shadow-sm">
-                                            Confirmar Recebimento
-                                        </button>
-                                    </td>
-                                </tr>
-                                <!-- Pedido Em Produção -->
-                                <tr class="hover:bg-gray-50 transition">
-                                    <td class="px-6 py-4 font-medium text-gray-900">#PO-9925</td>
-                                    <td class="px-6 py-4">Embalagem Biodegradável (x10000)</td>
-                                    <td class="px-6 py-4 font-medium">R$ 12.000,00</td>
-                                    <td class="px-6 py-4">25/03/2026</td>
-                                    <td class="px-6 py-4">
-                                        <span class="bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1 w-fit">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>
-                                            Em Produção
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 text-right">
-                                        <button class="text-gray-500 hover:text-brand-darkblue font-medium text-sm">Detalhes</button>
-                                    </td>
-                                </tr>
+                                <?php if (empty($buyer_orders)): ?>
+                                    <tr>
+                                        <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                                            Nenhum pedido de compra encontrado.
+                                        </td>
+                                    </tr>
+                                <?php else: ?>
+                                    <?php foreach ($buyer_orders as $order): ?>
+                                        <tr class="hover:bg-gray-50 transition">
+                                            <td class="px-6 py-4 font-medium text-gray-900">#PED-<?php echo str_pad($order['id'], 4, '0', STR_PAD_LEFT); ?></td>
+                                            <td class="px-6 py-4"><?php echo htmlspecialchars($order['product_name']); ?> (x<?php echo number_format($order['quantity'], 0, ',', '.'); ?>)</td>
+                                            <td class="px-6 py-4"><?php echo htmlspecialchars($order['manufacturer_company'] ?: $order['manufacturer_name']); ?></td>
+                                            <td class="px-6 py-4 font-bold text-brand-darkblue">R$ <?php echo number_format($order['total_amount'], 2, ',', '.'); ?></td>
+                                            <td class="px-6 py-4"><?php echo date('d/m/Y', strtotime($order['real_delivery_date'])); ?></td>
+                                            <td class="px-6 py-4">
+                                                <?php if ($order['status'] === 'pendente_admin'): ?>
+                                                    <span class="bg-yellow-100 text-yellow-700 px-2.5 py-1 rounded-full text-xs font-bold">Pendente Aprovação</span>
+                                                <?php elseif ($order['status'] === 'aprovado'): ?>
+                                                    <span class="bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full text-xs font-bold">Aprovado</span>
+                                                <?php elseif ($order['status'] === 'em_producao'): ?>
+                                                    <span class="bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1 w-fit">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                                        Em Produção
+                                                    </span>
+                                                <?php elseif ($order['status'] === 'enviado'): ?>
+                                                    <span class="bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1 w-fit">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18H3c-.6 0-1-.4-1-1V7c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v11"/><path d="M14 9h4l4 4v4c0 .6-.4 1-1 1h-2"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>
+                                                        Enviado
+                                                    </span>
+                                                <?php elseif ($order['status'] === 'concluido'): ?>
+                                                    <span class="bg-green-100 text-green-700 px-2.5 py-1 rounded-full text-xs font-bold">Concluído</span>
+                                                <?php elseif ($order['status'] === 'cancelado'): ?>
+                                                    <span class="bg-red-100 text-red-700 px-2.5 py-1 rounded-full text-xs font-bold">Cancelado</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="px-6 py-4 text-right">
+                                                <a href="detalhes_pedido.php?id=<?php echo $order['id']; ?>" class="text-gray-500 hover:text-gray-700 font-medium text-sm">Detalhes</a>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
@@ -493,7 +622,13 @@ $user_name = explode(' ', trim($_SESSION['user_name']))[0];
             // Mostra o conteúdo selecionado
             document.getElementById(tabId).classList.add('active');
             // Adiciona active no botão clicado
-            element.classList.add('active');
+            if (element) {
+                element.classList.add('active');
+            } else {
+                // Find the corresponding nav item if element is not provided
+                const navItem = document.querySelector(`.nav-item[onclick*="${tabId}"]`);
+                if (navItem) navItem.classList.add('active');
+            }
 
             // Atualiza o título da página
             const titles = {
@@ -517,6 +652,15 @@ $user_name = explode(' ', trim($_SESSION['user_name']))[0];
             modal.classList.add('hidden');
             modal.classList.remove('flex');
         }
+
+        // Switch to correct tab on load if specified in URL
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tab = urlParams.get('tab');
+            if (tab && ['produtos', 'orcamentos', 'pedidos', 'notificacoes'].includes(tab)) {
+                switchTab(tab);
+            }
+        });
     </script>
 </body>
 </html>

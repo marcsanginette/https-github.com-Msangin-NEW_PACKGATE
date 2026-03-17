@@ -202,14 +202,22 @@ $produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                         <h3 class="font-bold text-gray-900">Solicitações de Compradores</h3>
-                        <div class="flex gap-2">
-                            <select class="text-sm border-gray-300 rounded-lg focus:ring-brand-green focus:border-brand-green p-2 border outline-none">
-                                <option>Todos os Status</option>
-                                <option>Aguardando Resposta</option>
-                                <option>Respondidos</option>
-                            </select>
-                        </div>
                     </div>
+                    
+                    <?php
+                    // Buscar orçamentos do fabricante
+                    $stmt = $pdo->prepare("
+                        SELECT q.*, p.name as product_name, u.company_name as buyer_company, u.name as buyer_name
+                        FROM quotes q
+                        JOIN products p ON q.product_id = p.id
+                        JOIN users u ON q.buyer_id = u.id
+                        WHERE q.manufacturer_id = ?
+                        ORDER BY q.created_at DESC
+                    ");
+                    $stmt->execute([$_SESSION['user_id']]);
+                    $quotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    ?>
+
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-sm text-gray-600">
                             <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
@@ -224,32 +232,43 @@ $produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100">
-                                <tr class="hover:bg-gray-50 transition">
-                                    <td class="px-6 py-4 font-medium text-gray-900">#ORC-1042</td>
-                                    <td class="px-6 py-4">Logística Express S/A</td>
-                                    <td class="px-6 py-4">Caixa de Papelão Ondulado</td>
-                                    <td class="px-6 py-4 font-bold">5.000 un</td>
-                                    <td class="px-6 py-4">15/03/2026</td>
-                                    <td class="px-6 py-4">
-                                        <span class="bg-yellow-100 text-yellow-700 px-2.5 py-1 rounded-full text-xs font-bold">Aguardando</span>
-                                    </td>
-                                    <td class="px-6 py-4 text-right">
-                                        <button onclick="openModal('modal-responder-orcamento')" class="text-brand-green hover:text-brand-olive font-bold text-sm">Responder</button>
-                                    </td>
-                                </tr>
-                                <tr class="hover:bg-gray-50 transition">
-                                    <td class="px-6 py-4 font-medium text-gray-900">#ORC-1038</td>
-                                    <td class="px-6 py-4">Mercado Central</td>
-                                    <td class="px-6 py-4">Bobina de Plástico Bolha</td>
-                                    <td class="px-6 py-4 font-bold">50 rolos</td>
-                                    <td class="px-6 py-4">12/03/2026</td>
-                                    <td class="px-6 py-4">
-                                        <span class="bg-green-100 text-green-700 px-2.5 py-1 rounded-full text-xs font-bold">Respondido</span>
-                                    </td>
-                                    <td class="px-6 py-4 text-right">
-                                        <button class="text-gray-500 hover:text-gray-700 font-medium text-sm">Ver Proposta</button>
-                                    </td>
-                                </tr>
+                                <?php if (empty($quotes)): ?>
+                                    <tr>
+                                        <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                                            Nenhum orçamento recebido ainda.
+                                        </td>
+                                    </tr>
+                                <?php else: ?>
+                                    <?php foreach ($quotes as $quote): ?>
+                                        <tr class="hover:bg-gray-50 transition">
+                                            <td class="px-6 py-4 font-medium text-gray-900">#ORC-<?php echo str_pad($quote['id'], 4, '0', STR_PAD_LEFT); ?></td>
+                                            <td class="px-6 py-4"><?php echo htmlspecialchars($quote['buyer_company'] ?: $quote['buyer_name']); ?></td>
+                                            <td class="px-6 py-4"><?php echo htmlspecialchars($quote['product_name']); ?></td>
+                                            <td class="px-6 py-4 font-bold"><?php echo number_format($quote['quantity'], 0, ',', '.'); ?> un</td>
+                                            <td class="px-6 py-4"><?php echo date('d/m/Y', strtotime($quote['created_at'])); ?></td>
+                                            <td class="px-6 py-4">
+                                                <?php if ($quote['status'] === 'aguardando'): ?>
+                                                    <span class="bg-yellow-100 text-yellow-700 px-2.5 py-1 rounded-full text-xs font-bold">Aguardando</span>
+                                                <?php elseif ($quote['status'] === 'respondido'): ?>
+                                                    <span class="bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full text-xs font-bold">Respondido</span>
+                                                <?php elseif ($quote['status'] === 'recusado'): ?>
+                                                    <span class="bg-red-100 text-red-700 px-2.5 py-1 rounded-full text-xs font-bold">Recusado</span>
+                                                <?php elseif ($quote['status'] === 'aprovado'): ?>
+                                                    <span class="bg-green-100 text-green-700 px-2.5 py-1 rounded-full text-xs font-bold">Aprovado</span>
+                                                <?php elseif ($quote['status'] === 'pedido_criado'): ?>
+                                                    <span class="bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full text-xs font-bold">Pedido Criado</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="px-6 py-4 text-right">
+                                                <?php if ($quote['status'] === 'aguardando'): ?>
+                                                    <a href="responder_orcamento.php?id=<?php echo $quote['id']; ?>" class="text-brand-green hover:text-brand-olive font-bold text-sm">Responder</a>
+                                                <?php else: ?>
+                                                    <a href="responder_orcamento.php?id=<?php echo $quote['id']; ?>" class="text-gray-500 hover:text-gray-700 font-medium text-sm">Ver Proposta</a>
+                                                <?php endif; ?>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
@@ -269,6 +288,21 @@ $produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <button class="px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap">Concluídos</button>
                 </div>
 
+                <?php
+                // Buscar pedidos do fabricante (apenas os aprovados pelo admin e posteriores)
+                $stmt = $pdo->prepare("
+                    SELECT po.*, p.name as product_name, q.quantity, q.real_delivery_date, u.company_name as buyer_company, u.name as buyer_name
+                    FROM purchase_orders po
+                    JOIN quotes q ON po.quote_id = q.id
+                    JOIN products p ON q.product_id = p.id
+                    JOIN users u ON po.buyer_id = u.id
+                    WHERE po.manufacturer_id = ? AND po.status != 'pendente_admin'
+                    ORDER BY po.created_at DESC
+                ");
+                $stmt->execute([$_SESSION['user_id']]);
+                $manuf_orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                ?>
+
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-sm text-gray-600">
@@ -284,38 +318,41 @@ $produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100">
-                                <!-- Pedido Novo -->
-                                <tr class="hover:bg-gray-50 transition">
-                                    <td class="px-6 py-4 font-medium text-gray-900">#PO-9925</td>
-                                    <td class="px-6 py-4">Logística Express S/A</td>
-                                    <td class="px-6 py-4">Caixa de Papelão (x5000)</td>
-                                    <td class="px-6 py-4 font-medium text-brand-darkblue">R$ 12.500,00</td>
-                                    <td class="px-6 py-4">30/03/2026</td>
-                                    <td class="px-6 py-4">
-                                        <span class="bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full text-xs font-bold">Pendente</span>
-                                    </td>
-                                    <td class="px-6 py-4 text-right">
-                                        <button onclick="openModal('modal-atualizar-pedido')" class="bg-brand-green hover:bg-brand-olive text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm">
-                                            Atualizar Status
-                                        </button>
-                                    </td>
-                                </tr>
-                                <!-- Pedido Em Produção -->
-                                <tr class="hover:bg-gray-50 transition">
-                                    <td class="px-6 py-4 font-medium text-gray-900">#PO-9910</td>
-                                    <td class="px-6 py-4">Mercado Central</td>
-                                    <td class="px-6 py-4">Bobina Plástico (x50)</td>
-                                    <td class="px-6 py-4 font-medium text-brand-darkblue">R$ 2.250,00</td>
-                                    <td class="px-6 py-4">20/03/2026</td>
-                                    <td class="px-6 py-4">
-                                        <span class="bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full text-xs font-bold">Em Produção</span>
-                                    </td>
-                                    <td class="px-6 py-4 text-right">
-                                        <button onclick="openModal('modal-atualizar-pedido')" class="bg-brand-green hover:bg-brand-olive text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm">
-                                            Atualizar Status
-                                        </button>
-                                    </td>
-                                </tr>
+                                <?php if (empty($manuf_orders)): ?>
+                                    <tr>
+                                        <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                                            Nenhum pedido de compra encontrado.
+                                        </td>
+                                    </tr>
+                                <?php else: ?>
+                                    <?php foreach ($manuf_orders as $order): ?>
+                                        <tr class="hover:bg-gray-50 transition">
+                                            <td class="px-6 py-4 font-medium text-gray-900">#PED-<?php echo str_pad($order['id'], 4, '0', STR_PAD_LEFT); ?></td>
+                                            <td class="px-6 py-4"><?php echo htmlspecialchars($order['buyer_company'] ?: $order['buyer_name']); ?></td>
+                                            <td class="px-6 py-4"><?php echo htmlspecialchars($order['product_name']); ?> (x<?php echo number_format($order['quantity'], 0, ',', '.'); ?>)</td>
+                                            <td class="px-6 py-4 font-bold text-brand-darkblue">R$ <?php echo number_format($order['total_amount'], 2, ',', '.'); ?></td>
+                                            <td class="px-6 py-4"><?php echo date('d/m/Y', strtotime($order['real_delivery_date'])); ?></td>
+                                            <td class="px-6 py-4">
+                                                <?php if ($order['status'] === 'aprovado'): ?>
+                                                    <span class="bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full text-xs font-bold">Novo Pedido</span>
+                                                <?php elseif ($order['status'] === 'em_producao'): ?>
+                                                    <span class="bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full text-xs font-bold">Em Produção</span>
+                                                <?php elseif ($order['status'] === 'enviado'): ?>
+                                                    <span class="bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full text-xs font-bold">Enviado</span>
+                                                <?php elseif ($order['status'] === 'concluido'): ?>
+                                                    <span class="bg-green-100 text-green-700 px-2.5 py-1 rounded-full text-xs font-bold">Concluído</span>
+                                                <?php elseif ($order['status'] === 'cancelado'): ?>
+                                                    <span class="bg-red-100 text-red-700 px-2.5 py-1 rounded-full text-xs font-bold">Cancelado</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="px-6 py-4 text-right">
+                                                <a href="gerenciar_pedido.php?id=<?php echo $order['id']; ?>" class="bg-brand-green hover:bg-brand-olive text-white px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm">
+                                                    Gerenciar
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </div>

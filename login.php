@@ -19,26 +19,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         try {
             // Busca o usuário pelo email
-            $stmt = $pdo->prepare("SELECT id, name, password, role FROM users WHERE email = ?");
+            $stmt = $pdo->prepare("SELECT id, name, password, role, status FROM users WHERE email = ?");
             $stmt->execute([$email]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             // Verifica se o usuário existe e se a senha está correta
             if ($user && password_verify($password, $user['password'])) {
-                // Login com sucesso: salva dados na sessão
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['user_name'] = $user['name'];
-                $_SESSION['user_role'] = $user['role'];
-                
-                // Redireciona com base no perfil
-                if ($user['role'] === 'comprador') {
-                    header("Location: dashboard_comprador.php");
-                } elseif ($user['role'] === 'fabricante') {
-                    header("Location: dashboard_fabricante.php"); // Criaremos depois
+                if ($user['status'] === 'pending') {
+                    $error = "Seu cadastro está pendente de aprovação pela plataforma.";
+                } elseif ($user['status'] === 'rejected') {
+                    $error = "Seu cadastro foi rejeitado pela plataforma. Entre em contato com o suporte.";
                 } else {
-                    header("Location: index.php"); // Admin ou fallback
+                    // Login com sucesso: salva dados na sessão
+                    $_SESSION['user_id'] = $user['id'];
+                    $_SESSION['user_name'] = $user['name'];
+                    $_SESSION['user_role'] = $user['role'];
+                    
+                    // Redireciona com base no perfil
+                    if ($user['role'] === 'comprador') {
+                        header("Location: dashboard_comprador.php");
+                    } elseif ($user['role'] === 'fabricante') {
+                        header("Location: dashboard_fabricante.php");
+                    } elseif ($user['role'] === 'admin') {
+                        header("Location: dashboard_admin.php");
+                    } else {
+                        header("Location: index.php"); // Fallback
+                    }
+                    exit;
                 }
-                exit;
             } else {
                 $error = "Email ou senha incorretos.";
             }

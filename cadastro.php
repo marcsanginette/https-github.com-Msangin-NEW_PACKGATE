@@ -33,12 +33,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             // Criptografa a senha
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+            $status = ($role === 'fabricante') ? 'pending' : 'approved';
 
             try {
                 // Insere no banco de dados
-                $stmt = $pdo->prepare("INSERT INTO users (role, name, email, password, company_name, phone, cnpj, description, employees_count, annual_revenue) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt = $pdo->prepare("INSERT INTO users (role, status, name, email, password, company_name, phone, cnpj, description, employees_count, annual_revenue) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
                 $stmt->execute([
                     $role, 
+                    $status,
                     $name, 
                     $email, 
                     $hashed_password, 
@@ -50,7 +52,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $annual_revenue
                 ]);
                 
-                $success = "Cadastro realizado com sucesso! Você já pode fazer login.";
+                if ($role === 'fabricante') {
+                    $success = "Cadastro realizado com sucesso! Seu cadastro está pendente de aprovação pela plataforma. Você será notificado quando for aprovado.";
+                } else {
+                    $success = "Cadastro realizado com sucesso! Você já pode fazer login.";
+                }
                 // Opcional: Redirecionar para o login após 2 segundos
                 // header("refresh:2;url=login.php");
             } catch (PDOException $e) {

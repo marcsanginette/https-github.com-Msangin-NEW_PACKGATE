@@ -15,6 +15,7 @@ try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
         role ENUM('comprador', 'fabricante', 'admin') NOT NULL DEFAULT 'comprador',
+        status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'approved',
         name VARCHAR(255) NOT NULL,
         email VARCHAR(255) NOT NULL UNIQUE,
         password VARCHAR(255) NOT NULL,
@@ -50,6 +51,11 @@ try {
         min_quantity VARCHAR(100) NOT NULL DEFAULT '1',
         additional_notes TEXT,
         image_url VARCHAR(255),
+        image_url_2 VARCHAR(255),
+        image_url_3 VARCHAR(255),
+        image_url_4 VARCHAR(255),
+        image_url_5 VARCHAR(255),
+        status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (manufacturer_id) REFERENCES users(id) ON DELETE CASCADE,
         FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
@@ -77,6 +83,7 @@ try {
         'image_url_3' => 'VARCHAR(255)',
         'image_url_4' => 'VARCHAR(255)',
         'image_url_5' => 'VARCHAR(255)',
+        'status' => "ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending'",
         'created_at' => 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP'
     ];
 
@@ -88,6 +95,13 @@ try {
         }
     }
 
+    // Atualização robusta da tabela users
+    try {
+        $pdo->exec("ALTER TABLE users ADD COLUMN status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'approved';");
+    } catch (PDOException $e) {
+        // Ignora
+    }
+
     // Tentar adicionar as chaves estrangeiras (ignora se já existirem)
     try {
         $pdo->exec("ALTER TABLE products ADD CONSTRAINT fk_manufacturer FOREIGN KEY (manufacturer_id) REFERENCES users(id) ON DELETE CASCADE;");
@@ -95,6 +109,47 @@ try {
     
     try {
         $pdo->exec("ALTER TABLE products ADD CONSTRAINT fk_category FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL;");
+    } catch (PDOException $e) {}
+
+    // Atualização robusta da tabela quotes
+    $expected_quotes_columns = [
+        'desired_delivery_date' => 'DATE',
+        'location' => 'VARCHAR(255)',
+        'buyer_notes' => 'TEXT',
+        'unit_price' => 'DECIMAL(12, 2)',
+        'real_delivery_date' => 'DATE',
+        'commercial_conditions' => 'TEXT',
+        'status' => "ENUM('aguardando', 'respondido', 'recusado', 'aprovado', 'pedido_criado') DEFAULT 'aguardando'"
+    ];
+    foreach ($expected_quotes_columns as $col_name => $col_def) {
+        try {
+            $pdo->exec("ALTER TABLE quotes ADD COLUMN $col_name $col_def;");
+        } catch (PDOException $e) {
+            // Ignora se já existir
+        }
+    }
+    // Modify status column in quotes just in case it already existed with old enum
+    try {
+        $pdo->exec("ALTER TABLE quotes MODIFY COLUMN status ENUM('aguardando', 'respondido', 'recusado', 'aprovado', 'pedido_criado') DEFAULT 'aguardando';");
+    } catch (PDOException $e) {}
+
+    // Atualização robusta da tabela purchase_orders
+    $expected_po_columns = [
+        'billing_details' => 'TEXT',
+        'delivery_details' => 'TEXT',
+        'invoice_xml_url' => 'VARCHAR(255)',
+        'status' => "ENUM('pendente_admin', 'aprovado', 'em_producao', 'enviado', 'entregue', 'cancelado') DEFAULT 'pendente_admin'"
+    ];
+    foreach ($expected_po_columns as $col_name => $col_def) {
+        try {
+            $pdo->exec("ALTER TABLE purchase_orders ADD COLUMN $col_name $col_def;");
+        } catch (PDOException $e) {
+            // Ignora se já existir
+        }
+    }
+    // Modify status column in purchase_orders just in case it already existed with old enum
+    try {
+        $pdo->exec("ALTER TABLE purchase_orders MODIFY COLUMN status ENUM('pendente_admin', 'aprovado', 'em_producao', 'enviado', 'entregue', 'cancelado') DEFAULT 'pendente_admin';");
     } catch (PDOException $e) {}
 
     // Modificar colunas antigas para aceitar NULL (evita erros ao inserir novos produtos)
@@ -117,10 +172,13 @@ try {
         manufacturer_id INT NOT NULL,
         product_id INT NOT NULL,
         quantity INT NOT NULL,
-        status ENUM('aguardando', 'respondido', 'recusado', 'aprovado') DEFAULT 'aguardando',
-        manufacturer_message TEXT,
-        total_price DECIMAL(12, 2),
-        valid_until DATE,
+        desired_delivery_date DATE,
+        location VARCHAR(255),
+        buyer_notes TEXT,
+        unit_price DECIMAL(12, 2),
+        real_delivery_date DATE,
+        commercial_conditions TEXT,
+        status ENUM('aguardando', 'respondido', 'recusado', 'aprovado', 'pedido_criado') DEFAULT 'aguardando',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (buyer_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -135,8 +193,10 @@ try {
         buyer_id INT NOT NULL,
         manufacturer_id INT NOT NULL,
         total_amount DECIMAL(12, 2) NOT NULL,
-        status ENUM('pendente', 'em_producao', 'enviado', 'concluido', 'cancelado') DEFAULT 'pendente',
-        delivery_date DATE,
+        billing_details TEXT,
+        delivery_details TEXT,
+        invoice_xml_url VARCHAR(255),
+        status ENUM('pendente_admin', 'aprovado', 'em_producao', 'enviado', 'entregue', 'cancelado') DEFAULT 'pendente_admin',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (quote_id) REFERENCES quotes(id) ON DELETE CASCADE,
