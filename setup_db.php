@@ -55,6 +55,15 @@ try {
         FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
 
+    // Tentar adicionar a coluna manufacturer_id caso a tabela seja muito antiga e não a tenha
+    try {
+        $pdo->exec("ALTER TABLE products ADD COLUMN manufacturer_id INT NOT NULL AFTER id;");
+        // Tentar adicionar a chave estrangeira
+        $pdo->exec("ALTER TABLE products ADD CONSTRAINT fk_manufacturer FOREIGN KEY (manufacturer_id) REFERENCES users(id) ON DELETE CASCADE;");
+    } catch (PDOException $e) {
+        // Ignora se a coluna já existir
+    }
+
     // Tentar adicionar as novas colunas caso a tabela já exista (evita erros se o usuário já rodou o script antes)
     try {
         $pdo->exec("ALTER TABLE products 
