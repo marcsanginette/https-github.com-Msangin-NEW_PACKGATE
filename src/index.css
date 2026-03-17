@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-green: #8DC63F;
+  --color-brand-darkblue: #1A237E;
+  --color-brand-bg: #f9fafb;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
