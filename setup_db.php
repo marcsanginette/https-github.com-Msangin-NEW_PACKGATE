@@ -39,16 +39,39 @@ try {
         id INT AUTO_INCREMENT PRIMARY KEY,
         manufacturer_id INT NOT NULL,
         category_id INT,
+        type VARCHAR(100),
         name VARCHAR(255) NOT NULL,
         description TEXT,
-        material VARCHAR(100),
-        price DECIMAL(10, 2) NOT NULL,
-        min_quantity INT NOT NULL DEFAULT 1,
+        weight VARCHAR(100),
+        dimensions VARCHAR(100),
+        volume VARCHAR(100),
+        customizable BOOLEAN DEFAULT FALSE,
+        price DECIMAL(10, 2) DEFAULT 0.00,
+        min_quantity VARCHAR(100) NOT NULL DEFAULT '1',
+        additional_notes TEXT,
         image_url VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (manufacturer_id) REFERENCES users(id) ON DELETE CASCADE,
         FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+    // Tentar adicionar as novas colunas caso a tabela já exista (evita erros se o usuário já rodou o script antes)
+    try {
+        $pdo->exec("ALTER TABLE products 
+            ADD COLUMN type VARCHAR(100) AFTER category_id,
+            ADD COLUMN weight VARCHAR(100) AFTER description,
+            ADD COLUMN dimensions VARCHAR(100) AFTER weight,
+            ADD COLUMN volume VARCHAR(100) AFTER dimensions,
+            ADD COLUMN customizable BOOLEAN DEFAULT FALSE AFTER volume,
+            ADD COLUMN additional_notes TEXT AFTER min_quantity;");
+    } catch (PDOException $e) {
+        // Se der erro, é porque as colunas já existem, então ignoramos silenciosamente
+    }
+    
+    // Modificar min_quantity para VARCHAR para aceitar textos como "1.000 unidades"
+    try {
+        $pdo->exec("ALTER TABLE products MODIFY COLUMN min_quantity VARCHAR(100) NOT NULL DEFAULT '1';");
+    } catch (PDOException $e) {}
 
     // 4. Tabela de Orçamentos (Quotes)
     $pdo->exec("CREATE TABLE IF NOT EXISTS quotes (

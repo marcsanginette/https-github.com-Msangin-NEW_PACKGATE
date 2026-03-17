@@ -109,9 +109,12 @@ $user_name = explode(' ', trim($_SESSION['user_name']))[0];
                     <p class="text-xs text-gray-500">Comprador</p>
                     <p class="text-sm font-bold text-gray-900"><?php echo htmlspecialchars($user_name); ?></p>
                 </div>
-                <div class="w-10 h-10 rounded-full bg-brand-lightgreen text-brand-olive flex items-center justify-center font-bold text-lg">
-                    <?php echo strtoupper(substr($user_name, 0, 1)); ?>
-                </div>
+                
+                <!-- Ícone do Usuário com funcionalidade de Sair -->
+                <a href="logout.php" title="Sair e voltar ao início" class="w-10 h-10 rounded-full bg-brand-lightgreen text-brand-olive flex items-center justify-center font-bold text-lg hover:bg-red-100 hover:text-red-600 transition group relative cursor-pointer">
+                    <span class="group-hover:hidden"><?php echo strtoupper(substr($user_name, 0, 1)); ?></span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden group-hover:block"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+                </a>
             </div>
         </header>
 
