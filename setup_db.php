@@ -55,37 +55,43 @@ try {
         FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
 
-    // Tentar adicionar a coluna manufacturer_id caso a tabela seja muito antiga e não a tenha
+    // -------------------------------------------------------------------------
+    // ATUALIZAÇÃO ROBUSTA DA TABELA PRODUCTS
+    // Tenta adicionar TODAS as colunas possíveis caso a tabela seja antiga
+    // -------------------------------------------------------------------------
+    $expected_columns = [
+        'manufacturer_id' => 'INT NOT NULL',
+        'category_id' => 'INT',
+        'type' => 'VARCHAR(100)',
+        'weight' => 'VARCHAR(100)',
+        'dimensions' => 'VARCHAR(100)',
+        'volume' => 'VARCHAR(100)',
+        'customizable' => 'BOOLEAN DEFAULT FALSE',
+        'price' => 'DECIMAL(10, 2) DEFAULT 0.00',
+        'min_quantity' => "VARCHAR(100) NOT NULL DEFAULT '1'",
+        'additional_notes' => 'TEXT',
+        'image_url' => 'VARCHAR(255)',
+        'created_at' => 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP'
+    ];
+
+    foreach ($expected_columns as $col_name => $col_def) {
+        try {
+            $pdo->exec("ALTER TABLE products ADD COLUMN $col_name $col_def;");
+        } catch (PDOException $e) {
+            // Ignora silenciosamente se a coluna já existir
+        }
+    }
+
+    // Tentar adicionar as chaves estrangeiras (ignora se já existirem)
     try {
-        $pdo->exec("ALTER TABLE products ADD COLUMN manufacturer_id INT NOT NULL AFTER id;");
-        // Tentar adicionar a chave estrangeira
         $pdo->exec("ALTER TABLE products ADD CONSTRAINT fk_manufacturer FOREIGN KEY (manufacturer_id) REFERENCES users(id) ON DELETE CASCADE;");
-    } catch (PDOException $e) {
-        // Ignora se a coluna já existir
-    }
-
-    // Tentar adicionar a coluna category_id
-    try {
-        $pdo->exec("ALTER TABLE products ADD COLUMN category_id INT AFTER manufacturer_id;");
-        $pdo->exec("ALTER TABLE products ADD CONSTRAINT fk_category FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL;");
-    } catch (PDOException $e) {
-        // Ignora se a coluna já existir
-    }
-
-    // Tentar adicionar as novas colunas caso a tabela já exista (evita erros se o usuário já rodou o script antes)
-    try {
-        $pdo->exec("ALTER TABLE products 
-            ADD COLUMN type VARCHAR(100) AFTER category_id,
-            ADD COLUMN weight VARCHAR(100) AFTER description,
-            ADD COLUMN dimensions VARCHAR(100) AFTER weight,
-            ADD COLUMN volume VARCHAR(100) AFTER dimensions,
-            ADD COLUMN customizable BOOLEAN DEFAULT FALSE AFTER volume,
-            ADD COLUMN additional_notes TEXT AFTER min_quantity;");
-    } catch (PDOException $e) {
-        // Se der erro, é porque as colunas já existem, então ignoramos silenciosamente
-    }
+    } catch (PDOException $e) {}
     
-    // Modificar min_quantity para VARCHAR para aceitar textos como "1.000 unidades"
+    try {
+        $pdo->exec("ALTER TABLE products ADD CONSTRAINT fk_category FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL;");
+    } catch (PDOException $e) {}
+
+    // Modificar min_quantity para VARCHAR para aceitar textos como "1.000 unidades" (caso já existisse como INT)
     try {
         $pdo->exec("ALTER TABLE products MODIFY COLUMN min_quantity VARCHAR(100) NOT NULL DEFAULT '1';");
     } catch (PDOException $e) {}
